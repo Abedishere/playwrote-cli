@@ -1,10 +1,10 @@
 # web-agent-cli
 
-**A browser remote control for AI agents.**
+**The CLI alternative to Playwright MCP, for the Chromium browser you actually use.**
 
-Browser MCP servers (Playwright MCP and similar) send the agent a huge page snapshot after every click. That's slow, it burns tokens, and they often take over your screen.
+Playwright MCP is great until you watch your agent use it: a full page snapshot after every click, thousands of tokens per step, a browser it launches itself, and no easy way to use the Opera you're logged into.
 
-`web` is a small command-line tool that drives your real browser (Opera, Chrome or Edge) and prints only what the agent needs:
+`web` does the same job as a plain command-line tool. Your agent calls it from the shell, it drives **Opera, Chrome or Edge** (any Chromium browser), and it prints only what the agent needs:
 
 ```
 $ web goto news.ycombinator.com
@@ -21,7 +21,17 @@ ok -> https://news.ycombinator.com/item?id=50326821
 
 Every clickable thing gets a short ref like `e17`. The agent reads the page, then says `click e17`. That's the whole idea.
 
-## Why
+## Why use it instead of Playwright MCP
+
+| | Playwright MCP | web |
+|---|---|---|
+| Output after an action | Full page snapshot | One line (`ok`, or `ok -> new url`) |
+| Reading a page | Accessibility tree dump | Compact outline, folded only when over budget |
+| Browser | Its own Chromium, Firefox or WebKit | Your Opera, Chrome or Edge, with your logins |
+| Setup | MCP server config | `npm i -g`, then just a shell command |
+| Batching | One tool call per action | `web do` runs many steps in one call |
+
+Pick Playwright MCP if you need Firefox or WebKit. Pick `web` if you want a lean agent loop on the Chromium browser you already use.
 
 - **Fewer tokens.** You get compact text, not accessibility-tree dumps. A full HN front page is about 6k characters.
 - **Keeps your PC usable.** It works while the browser is minimized and never moves your mouse.
