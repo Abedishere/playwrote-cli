@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "The CLI alternative to Playwright MCP: a token-lean browser tool for AI agents that drives your own Opera, Chrome or Edge",
   "bin": { "web": "web.js" },
-  "files": ["web.js", "pagelib.js", "selftest.js", "README.md", "SKILL.md"],
+  "files": ["assets", "web.js", "pagelib.js", "selftest.js", "README.md", "SKILL.md"],
   "engines": { "node": ">=22" },
   "scripts": { "test": "node web.js selftest" },
   "license": "MIT"
