@@ -1,19 +1,23 @@
 <div align="center">
 
-<img src="assets/banner.svg" alt="playwrote" width="100%">
+<img src="assets/logo.svg" alt="PLAYWROTE" width="90%">
 
-### The CLI alternative to Playwright MCP, for the Chromium browser you actually use.
+## The CLI alternative to Playwright MCP
 
-[![License: MIT](https://img.shields.io/badge/license-MIT-ff4d6d?style=for-the-badge)](LICENSE)
-[![Node](https://img.shields.io/badge/node-%E2%89%A522-ffb347?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org)
-[![Dependencies](https://img.shields.io/badge/dependencies-0-7cf5c4?style=for-the-badge)](package.json)
-[![Selftest](https://img.shields.io/badge/selftest-20%2F20-7c6cff?style=for-the-badge)](selftest.js)
+#### *Playwright wrote MCP. We wrote the CLI.*
 
-![Opera](https://img.shields.io/badge/Opera-FF1B2D?style=flat-square&logo=opera&logoColor=white)
-![Chrome](https://img.shields.io/badge/Chrome-4285F4?style=flat-square&logo=googlechrome&logoColor=white)
-![Edge](https://img.shields.io/badge/Edge-0078D7?style=flat-square)
-![Windows](https://img.shields.io/badge/Windows-tested-0078D6?style=flat-square&logo=windows&logoColor=white)
-![Claude Code](https://img.shields.io/badge/Claude_Code-skill_included-D97757?style=flat-square&logo=anthropic&logoColor=white)
+**Token-lean browser control for AI agents, on the Opera, Chrome or Edge you already use.**
+
+[![License: MIT](https://img.shields.io/badge/license-MIT-f7d031?style=for-the-badge&labelColor=0d1117)](LICENSE)
+[![Node](https://img.shields.io/badge/node-%E2%89%A522-f5a623?style=for-the-badge&logo=nodedotjs&logoColor=white&labelColor=0d1117)](https://nodejs.org)
+[![Dependencies](https://img.shields.io/badge/dependencies-0-f5a623?style=for-the-badge&labelColor=0d1117)](package.json)
+[![Selftest](https://img.shields.io/badge/selftest-20%2F20-ef6c2b?style=for-the-badge&labelColor=0d1117)](selftest.js)
+
+![Opera](https://img.shields.io/badge/Opera-161b22?style=flat-square&logo=opera&logoColor=f5a623)
+![Chrome](https://img.shields.io/badge/Chrome-161b22?style=flat-square&logo=googlechrome&logoColor=f5a623)
+![Edge](https://img.shields.io/badge/Edge-161b22?style=flat-square&logoColor=f5a623)
+![Windows](https://img.shields.io/badge/Windows-tested-161b22?style=flat-square&logo=windows&logoColor=f5a623)
+![Claude Code](https://img.shields.io/badge/Claude_Code-skill_included-161b22?style=flat-square&logo=anthropic&logoColor=f5a623)
 
 [Install](#-install) · [Quick start](#-quick-start) · [Commands](#-commands) · [vs Playwright MCP](#-why-not-playwright-mcp) · [How it works](#-how-it-works)
 
