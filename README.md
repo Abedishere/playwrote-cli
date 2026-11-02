@@ -16,8 +16,8 @@
 ![Opera](https://img.shields.io/badge/Opera-161b22?style=flat-square&logo=opera&logoColor=f5a623)
 ![Chrome](https://img.shields.io/badge/Chrome-161b22?style=flat-square&logo=googlechrome&logoColor=f5a623)
 ![Edge](https://img.shields.io/badge/Edge-161b22?style=flat-square&logoColor=f5a623)
-![Windows](https://img.shields.io/badge/Windows-tested-161b22?style=flat-square&logo=windows&logoColor=f5a623)
-![Claude Code](https://img.shields.io/badge/Claude_Code-skill_included-161b22?style=flat-square&logo=anthropic&logoColor=f5a623)
+![Windows](https://img.shields.io/badge/Windows_tested-161b22?style=flat-square&logo=windows&logoColor=f5a623)
+![Claude Code](https://img.shields.io/badge/Claude_Code_skill-161b22?style=flat-square&logo=anthropic&logoColor=f5a623)
 
 [Install](#-install) · [Quick start](#-quick-start) · [Commands](#-commands) · [vs Playwright MCP](#-why-not-playwright-mcp) · [How it works](#-how-it-works)
 
