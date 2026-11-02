@@ -11,7 +11,7 @@
 
 ![Opera](https://img.shields.io/badge/Opera-FF1B2D?style=flat-square&logo=opera&logoColor=white)
 ![Chrome](https://img.shields.io/badge/Chrome-4285F4?style=flat-square&logo=googlechrome&logoColor=white)
-![Edge](https://img.shields.io/badge/Edge-0078D7?style=flat-square&logo=microsoftedge&logoColor=white)
+![Edge](https://img.shields.io/badge/Edge-0078D7?style=flat-square)
 ![Windows](https://img.shields.io/badge/Windows-tested-0078D6?style=flat-square&logo=windows&logoColor=white)
 ![Claude Code](https://img.shields.io/badge/Claude_Code-skill_included-D97757?style=flat-square&logo=anthropic&logoColor=white)
 
