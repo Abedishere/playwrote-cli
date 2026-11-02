@@ -5,7 +5,7 @@ description: Drive a real browser (Opera GX by default, also Chrome/Edge) from t
 
 # web CLI
 
-`web` is on PATH (PowerShell and Git Bash). Full reference: `~/.claude/tools/web/README.md`.
+`web` is on PATH (PowerShell and Git Bash). Full reference: `~/Desktop/claude/playwrote-cli/README.md`.
 
 ## Loop
 
