@@ -1,133 +1,96 @@
-# web
+# web-agent-cli
 
-A browser CLI built for AI agents. It drives Opera GX, Chrome or Edge over the Chrome DevTools Protocol (CDP), and prints compact text instead of full accessibility snapshots, so an agent spends far fewer tokens per step than with a browser MCP.
+**A browser remote control for AI agents.**
 
-- No dependencies. One Node 22+ script (uses the built-in `WebSocket` and `fetch`).
-- Works while the browser is minimized or behind other windows. You keep using your PC.
-- Never touches your own tabs or your everyday browser profile.
+Browser MCP servers (Playwright MCP and similar) send the agent a huge page snapshot after every click. That's slow, it burns tokens, and they often take over your screen.
+
+`web` is a small command-line tool that drives your real browser (Opera, Chrome or Edge) and prints only what the agent needs:
+
+```
+$ web goto news.ycombinator.com
+ok https://news.ycombinator.com/ "Hacker News"
+[e3 link "new"] [e4 link "past"] [e10 link "login"]
+table 92x3:
+  | 1. | [e12 link "Show HN: HackerBooks"] ( [e13 link "hackerbooks.org"] )
+  |  | 1629 points by [e14 link "roansh"] | [e17 link "268 comments"]
+  …+10 similar (web page --expand e231)
+
+$ web click e17
+ok -> https://news.ycombinator.com/item?id=50326821
+```
+
+Every clickable thing gets a short ref like `e17`. The agent reads the page, then says `click e17`. That's the whole idea.
+
+## Why
+
+- **Fewer tokens.** You get compact text, not accessibility-tree dumps. A full HN front page is about 6k characters.
+- **Keeps your PC usable.** It works while the browser is minimized and never moves your mouse.
+- **Uses your logins.** `web clone` copies your logins from your normal browser profile into the agent's profile.
+- **Zero dependencies.** One Node script. Requires Node 22 or later.
 
 ## Install
 
 ```
-git clone <this repo> ~/.claude/tools/web
+npm install -g github:Abedishere/web-agent-cli
+web selftest          # should end with: selftest ok (20/20)
 ```
 
-Then put a shim on `PATH`:
+The first command opens a separate browser window that belongs to the agent. Your own windows and tabs are left alone.
 
-- `web.cmd` (PowerShell / cmd): `@node "%USERPROFILE%\.claude\tools\web\web.js" %*`
-- `web` (Git Bash / sh): `#!/bin/sh` + `exec node "$HOME/.claude/tools/web/web.js" "$@"`
+## Commands
 
-Or `npm install -g .` from the repo, which uses the `bin` entry in `package.json`.
+| Command | What it does |
+|---|---|
+| `web goto <url>` | Opens a page and prints its top part |
+| `web page` | Prints the whole page as an outline with refs |
+| `web page --region main` | Prints just one part (`main`, `nav`, `form`, `dialog`, or a ref) |
+| `web find <text>` | Finds elements, e.g. `web find "Sign in"` or `web find button:Send` |
+| `web click <ref>` | Clicks |
+| `web type <ref> <text> [--enter] [--clear]` | Types into a field |
+| `web select <ref> <option>` | Picks a dropdown option |
+| `web key Enter` | Presses a key (`Tab`, `Escape`, `Control+a`, ...) |
+| `web scroll [down\|up\|<ref>]` | Scrolls |
+| `web wait <text\|ref\|url:part>` | Waits until something appears |
+| `web text` | Plain page text |
+| `web shot [ref]` | Saves a screenshot and prints the file path |
+| `web eval <js>` | Runs JavaScript in the page |
+| `web console` / `web net` | Errors and network requests, for debugging web apps |
+| `web tabs` / `web open <url>` / `web back` | Tab and navigation basics |
+| `web do` | Runs many commands in one call (one per line, from stdin) |
+| `web clone [browser]` | Copies logins from your normal browser profile (close that browser first) |
+| `web up [opera\|chrome\|edge]` | Picks the browser (default: Opera) |
 
-Check it: `web selftest` (and `web selftest --minimized`).
+Add `--b chrome` to any command to use a different browser for that one call.
+
+## Using it from an agent
+
+Tell your agent (in CLAUDE.md, AGENTS.md or a system prompt):
+
+> For web tasks, use the `web` CLI. Start with `web goto <url>`, act on refs with `web click`/`web type`, and use `web find` instead of re-reading the whole page.
+
+There's a ready-made Claude Code skill in [`SKILL.md`](SKILL.md).
 
 ## How it works
 
 ```mermaid
 flowchart LR
-  A[agent: web click e4] --> B[web.js]
-  B --> C[~/.web-cli/state.json: default browser, agent tab per browser]
-  B --> D[GET 127.0.0.1:port/json/list]
-  D --> E[CDP websocket to the agent tab]
-  E --> F[inject pagelib.js, find data-aref=e4]
-  F --> G[Input.dispatchMouseEvent at its centre]
-  G --> H[wait for load, print: ok or ok -> new url]
+  A["web click e17"] --> B[web.js]
+  B --> C["browser debug port (CDP)"]
+  C --> D["find the element tagged e17 in the page"]
+  D --> E[click at its center]
+  E --> F["print: ok -> new url"]
 ```
 
-- **One process per call.** It connects, acts, prints and exits. A local connection takes about 50ms. There's no daemon to keep alive.
-- **Refs live in the DOM.** `page` and `find` tag elements with `data-aref="eN"`, so a ref from one call still works in the next. If the page re-rendered and the element is gone, you get `stale ref eN, run web find or web page again`.
-- **Dedicated profiles.** Each browser runs from `~/.web-cli/profiles/<browser>` on its own port (opera 9222, chrome 9223, edge 9224). Chromium refuses debug ports on the default profile, and this also keeps your real profile unlocked. Log in once inside the agent's window and the session persists.
-- **Its own tab.** The first call opens an agent tab and remembers its id. `web tabs` lists everything in that browser. `--tab <id>` acts on any other tab for one call, and `web use <id>` makes another tab the agent tab.
-- **Your logins.** `web clone [browser]` copies cookies, saved passwords, site storage and extensions from your real profile into the agent profile. Close the real browser for this, because Chromium locks the cookie DB and (since 136) refuses a debug port on the default profile. It's a snapshot: re-run it after you log into something new. Device-bound sessions (some Google logins) may not carry over.
-- **Background-safe.** Focus emulation is on, clicks are synthetic CDP input, and the OS cursor never moves. `shot` is the one exception: a minimized window renders no frames, so `shot` restores the window, captures and minimizes it again.
-
-## Commands
-
-Global flags: `--b opera|chrome|edge` (default: last `web up`, initially opera) and `--tab <id prefix>`.
-
-| Command | Prints |
-|---|---|
-| `up [browser]` | `up opera :9222`, starting the browser if needed. Also sets the default browser. |
-| `tabs` | `* 76A9F9 Title  url`, one line per tab. `*` is the agent tab. |
-| `open [url]` | Opens a new agent tab (and navigates if a URL is given). |
-| `goto <url> [--quiet] [--t s]` | `ok <url> "<title>"` plus the first 40 outline lines. `--quiet` prints only the first line. |
-| `page` | The whole page as an outline (see below). |
-| `page --region main\|nav\|form\|dialog\|header\|footer\|<ref>` | Just that subtree. |
-| `page --sel <css>` | The subtree matching a CSS selector. |
-| `page --expand <ref>` | A folded group, unfolded. |
-| `page --max N` / `--raw` | Changes the budget (default 8000 chars) / no budget and no folding. |
-| `snap` (= `page -i`) | Only refs, headings and landmarks. |
-| `find <text>` | Matching interactive elements as refs. If none match, falls back to text matches. |
-| `find button:Send`, `find textbox:`, `find link:Home` | Filters by role. |
-| `text [--sel css] [--max N]` | Visible text (default max 4000 chars). |
-| `click <ref>` | `ok`, or `ok -> <new url>`. Says `(js click, covered by X)` if something was on top of the element. |
-| `hover <ref>` | `ok` |
-| `type <ref> <text> [--clear] [--enter]` | `ok`. Real text input, so React and Vue see it. |
-| `select <ref> <option text or value>` | `ok <chosen option>` |
-| `key <Enter\|Tab\|Escape\|ArrowDown\|Control+a\|...>` | `ok` |
-| `scroll [down\|up\|<ref>]` | `ok <pos>/<max>`. Falls back to the largest inner scroller when the window can't scroll. |
-| `wait <text\|ref\|url:part\|gone:text> [--t 10]` | `ok`, or a timeout error. |
-| `eval <js expression>` | The value, truncated at 4000 chars. Promises are awaited. |
-| `shot [ref] [--o file]` | The PNG path only. Images are never printed inline. |
-| `net [--filter s] [--n 30]` | `200 fetch 1.2kb 45ms url`, from the Resource Timing API. |
-| `console [--all]` | Errors and warnings logged since the page loaded. |
-| `back`, `reload`, `close`, `use <id>` | Navigation and tab management. |
-| `do` | Runs commands from stdin, one per line, in one process. Stops at the first error. |
-| `clone [browser]` | Copies logins from your real profile. The real browser must be closed. |
-| `selftest [--minimized]` | 20 checks on a local page in a throwaway tab. Exits 0 when all pass. |
-
-Errors go to stderr as one line with exit code 1, and they say what to do next.
-
-## The outline (`web page`)
-
-```
-@ https://news.ycombinator.com/ "Hacker News"
-[e3 link "new"]
-table 92x3:
-  | 1. | [e11 link "" vote?id=…] | [e12 link "Show HN: …"] ( [e13 link "hackerbooks.org"] )
-  |  | 1629 points by [e14 link "roansh"] [e15 link "22 hours ago"] | [e17 link "268 comments"]
-  …+10 similar (web page --expand e231)
-form:
-  Search:
-  [e28 textbox "" =""]
-```
-
-- `[eN role "name" state]` is an element you can act on. The state part is `="value"` for textboxes and selects, `[x]`/`[ ]` for checkboxes, and `disabled` when it applies. Unnamed links show their href.
-- `#`, `##` and so on are headings. `nav:`, `main:`, `form "Search":` and `dialog:` are landmarks, with their content indented.
-- `table RxC:` marks a data table, one row per line. Layout tables (nested tables or big cells) are walked like divs instead.
-- Text is clipped (120 chars per text piece, 60 per element name). Hidden elements, scripts, SVG and pure punctuation are dropped.
-- **Folding happens only when the page is over budget.** If everything fits in `--max`, you get everything. Otherwise repeated sibling shapes are folded, including alternating patterns like story/subtext/spacer rows. Each group keeps as many items as fit (40, 20, 10, then 5), followed by `…+N similar (web page --expand eK)`.
-
-## Agent loop
-
-1. `web goto <url>`. The output already includes the top of the page.
-2. Not enough to act on? Run `web page`, or `web page --region main`.
-3. Act on a ref: `click`, `type` or `select`.
-4. After a click prints `ok -> <url>`, run `web page` again. After a partial update, use `web page --region <ref>` or `web find <target>`.
-5. Batch known sequences:
-
-```
-web do <<'EOF'
-goto example.com/login --quiet
-type e4 me@example.com
-type e5 hunter2 --enter
-wait url:/dashboard
-EOF
-```
+- The browser runs with a debug port, from its own profile folder in `~/.web-cli/profiles/`.
+- Refs are stored on the page itself (`data-aref="e17"`), so they still work on the next command.
+- A long page is folded only when it's over the size budget (8000 chars by default). `--expand` shows the folded part.
 
 ## Limits
 
-- **Main frame only.** iframes show as `iframe "src"`. Add `--frame` when a site needs it.
-- **Open Shadow DOM isn't traversed.** Use `eval` for web-component-heavy pages.
-- **One agent tab per browser.** Parallel agents would share it; use `--tab`, or `open` per agent.
-- **Firefox isn't supported.** It doesn't speak CDP.
-- `console` reports what the browser buffered since page load. Messages from before the last navigation are gone.
+- Opera, Chrome and Edge only. Firefox doesn't speak CDP.
+- Doesn't look inside iframes or Shadow DOM yet.
+- Tested on Windows. macOS and Linux need the browser paths added in `web.js`.
 
-## Files
+## License
 
-| File | Role |
-|---|---|
-| `web.js` | CLI, CDP client, browser launch, commands |
-| `pagelib.js` | Injected into the page: outline, refs, find, click points |
-| `selftest.js` | End-to-end checks |
-| `SKILL.md` | Instructions for Claude Code agents |
+MIT

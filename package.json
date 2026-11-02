@@ -6,6 +6,5 @@
   "files": ["web.js", "pagelib.js", "selftest.js", "README.md", "SKILL.md"],
   "engines": { "node": ">=22" },
   "scripts": { "test": "node web.js selftest" },
-  "license": "UNLICENSED",
-  "private": true
+  "license": "MIT",
 }
