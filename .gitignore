@@ -1,3 +1,9 @@
 node_modules/
 *.png
 
+graphify-out/
+.graphify-init
+CLAUDE.md
+AGENTS.md
+.claude/
+.codex/
