@@ -1,6 +1,10 @@
-# web-agent-cli
+# playwrote
+
+*Playwright wrote MCP. We wrote the CLI.*
 
 **The CLI alternative to Playwright MCP, for the Chromium browser you actually use.**
+
+Not affiliated with Playwright or Microsoft.
 
 Playwright MCP is great until you watch your agent use it: a full page snapshot after every click, thousands of tokens per step, a browser it launches itself, and no easy way to use the Opera you're logged into.
 
@@ -41,7 +45,7 @@ Pick Playwright MCP if you need Firefox or WebKit. Pick `web` if you want a lean
 ## Install
 
 ```
-npm install -g github:Abedishere/web-agent-cli
+npm install -g github:Abedishere/playwrote-cli
 web selftest          # should end with: selftest ok (20/20)
 ```
 

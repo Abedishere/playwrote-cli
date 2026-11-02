@@ -1,5 +1,5 @@
 {
-  "name": "web-agent-cli",
+  "name": "playwrote-cli",
   "version": "0.1.0",
   "description": "The CLI alternative to Playwright MCP: a token-lean browser tool for AI agents that drives your own Opera, Chrome or Edge",
   "bin": { "web": "web.js" },
