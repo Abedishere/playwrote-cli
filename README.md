@@ -38,6 +38,7 @@ flowchart LR
 - **Refs live in the DOM.** `page` and `find` tag elements with `data-aref="eN"`, so a ref from one call still works in the next. If the page re-rendered and the element is gone, you get `stale ref eN, run web find or web page again`.
 - **Dedicated profiles.** Each browser runs from `~/.web-cli/profiles/<browser>` on its own port (opera 9222, chrome 9223, edge 9224). Chromium refuses debug ports on the default profile, and this also keeps your real profile unlocked. Log in once inside the agent's window and the session persists.
 - **Its own tab.** The first call opens an agent tab and remembers its id. `web tabs` lists everything in that browser. `--tab <id>` acts on any other tab for one call, and `web use <id>` makes another tab the agent tab.
+- **Your logins.** `web clone [browser]` copies cookies, saved passwords, site storage and extensions from your real profile into the agent profile. Close the real browser for this, because Chromium locks the cookie DB and (since 136) refuses a debug port on the default profile. It's a snapshot: re-run it after you log into something new. Device-bound sessions (some Google logins) may not carry over.
 - **Background-safe.** Focus emulation is on, clicks are synthetic CDP input, and the OS cursor never moves. `shot` is the one exception: a minimized window renders no frames, so `shot` restores the window, captures and minimizes it again.
 
 ## Commands
@@ -72,6 +73,7 @@ Global flags: `--b opera|chrome|edge` (default: last `web up`, initially opera) 
 | `console [--all]` | Errors and warnings logged since the page loaded. |
 | `back`, `reload`, `close`, `use <id>` | Navigation and tab management. |
 | `do` | Runs commands from stdin, one per line, in one process. Stops at the first error. |
+| `clone [browser]` | Copies logins from your real profile. The real browser must be closed. |
 | `selftest [--minimized]` | 20 checks on a local page in a throwaway tab. Exits 0 when all pass. |
 
 Errors go to stderr as one line with exit code 1, and they say what to do next.

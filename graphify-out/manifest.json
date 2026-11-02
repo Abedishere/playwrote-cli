@@ -1,0 +1,52 @@
+{
+  "C:\\Users\\PinkPanther\\.claude\\tools\\web\\package.json": {
+    "mtime": 1793628890.780224,
+    "ast_hash": "486a6dce9d5d70209d7d5b9885db59cc",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\PinkPanther\\.claude\\tools\\web\\pagelib.js": {
+    "mtime": 1793628713.282616,
+    "ast_hash": "35609a1b14fbd57f991c493761567a2d",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\PinkPanther\\.claude\\tools\\web\\selftest.js": {
+    "mtime": 1793628724.8893802,
+    "ast_hash": "40960f2fe3516e4d16d6749ab887bad7",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\PinkPanther\\.claude\\tools\\web\\web.js": {
+    "mtime": 1793628889.5572724,
+    "ast_hash": "d4b60b1c77626317f6478ef642c714ba",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\PinkPanther\\.claude\\tools\\web\\.claude\\settings.json": {
+    "mtime": 1793628904.266055,
+    "ast_hash": "5d6ecd96cf065b16e8bb9fbf5d7d8f0d",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\PinkPanther\\.claude\\tools\\web\\.codex\\hooks.json": {
+    "mtime": 1793628904.1582258,
+    "ast_hash": "53dc14b4426e905a86b1d090f005dbfd",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\PinkPanther\\.claude\\tools\\web\\AGENTS.md": {
+    "mtime": 1793628904.1544244,
+    "ast_hash": "752aa83aa64361ac32860f882dcff932",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\PinkPanther\\.claude\\tools\\web\\CLAUDE.md": {
+    "mtime": 1793628904.2651284,
+    "ast_hash": "8a6643a420fdad6bfb583523bc6cef16",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\PinkPanther\\.claude\\tools\\web\\README.md": {
+    "mtime": 1793628766.33471,
+    "ast_hash": "fb9261a3ad674c9265e8829b88673eea",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\PinkPanther\\.claude\\tools\\web\\SKILL.md": {
+    "mtime": 1793628891.8549695,
+    "ast_hash": "040bf361540b42e9604f2c07bf2d286c",
+    "semantic_hash": ""
+  }
+}
