@@ -25,3 +25,10 @@ description: Drive a real browser (Opera GX by default, also Chrome/Edge) from t
 - Logins: the agent profile is a clone of the user's real Opera profile (`web clone`). If a site asks you to log in, tell the user. Do not type their credentials unless they give them for that task.
 - Debugging a web app: `web console`, `web net --filter api`, `web eval "<js>"`.
 - Broken? `web selftest` should print `selftest ok`.
+
+## Before filling any form
+
+1. Confirm the target: `web tabs` and check the agent tab (`*`) is the page the user means. The agent browser is a separate window from the user's own browser, so the user may be looking at a different copy of the page. If more than one tab matches, ask which one.
+2. Read the whole form first: `web page --region form` (or `web shot` when the form lives in a cross-origin iframe, which the outline cannot see). List every field, its current value, and which ones you have data for.
+3. Fill, then verify: re-read the form or `web shot` and check every value actually landed. Report a field as done only after you have seen it filled.
+4. Iframe forms (Stripe, payment, captcha-guarded): if typing does not land after one verified retry, stop and hand the values to the user. Do not loop on blind coordinate input.
