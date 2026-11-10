@@ -10,6 +10,7 @@ const HTML = `<!doctype html><title>web selftest</title>
 <label>Query <input id="q" placeholder="type here"></label>
 <select id="s"><option value="a">Alpha</option><option value="b">Beta</option></select>
 <label><input type="checkbox" id="c"> Agree</label>
+<label>Attach <input type="file" id="f" style="display:none" onchange="document.getElementById('fout').textContent='file:'+this.files[0].name"></label><span id="fout"></span>
 <button type="button" onclick="document.getElementById('out').textContent='clicked:'+document.getElementById('q').value+'-'+document.getElementById('s').value+'-'+document.getElementById('c').checked">Go</button>
 </form>
 <p id="out">waiting</p>
@@ -66,6 +67,8 @@ module.exports = async ({ st, b, Ctx, CMDS, newTab, http, BROWSERS, fl }) => {
     check('text', (await run('text')).includes('clicked:hello-b-true'), await run('text'));
     await run('type', q, 'bye', { clear: true, enter: true });
     check('type --clear --enter submits form', (await run('text')).includes('submitted:bye'), await run('text'));
+    const up = await run('upload', __filename);
+    check('upload to hidden file input', up === 'ok 1 file: selftest.js' && (await run('text')).includes('file:selftest.js'), up);
     const fake = ref(await run('find', 'Fake'), /\[(e\d+)/);
     await run('click', fake);
     check('click weak clickable', (await run('text')).includes('div clicked'), await run('text'));

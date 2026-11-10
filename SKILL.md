@@ -11,7 +11,7 @@ description: Drive a real browser (Opera GX by default, also Chrome/Edge) from t
 
 1. `web goto <url>`. The output already includes the top 40 lines of the page outline.
 2. Need more? Run `web page` (the whole page, 8k char budget, repeats folded only when over budget), or narrow it with `--region main|nav|form|dialog|<ref>` / `--sel <css>`. A fold marker `…+N similar (web page --expand eK)` means there are more items.
-3. Act on refs from the outline: `web click e12`, `web type e4 "text" [--clear] [--enter]`, `web select e7 "Option"`, `web key Enter`.
+3. Act on refs from the outline: `web click e12`, `web type e4 "text" [--clear] [--enter]`, `web select e7 "Option"`, `web upload e9 C:\path\file.pdf`, `web key Enter`.
 4. `ok -> <url>` means you navigated, so run `web page` again. For partial updates use `web find <text>` or `web page --region <ref>`, not a full re-dump.
 5. Use `web wait <text|ref|url:part|gone:text>` after actions that load content asynchronously.
 

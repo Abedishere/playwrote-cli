@@ -263,6 +263,20 @@ module.exports = function install() {
     el.dispatchEvent(new Event('change', { bubbles: true }));
     return clean(opt.text);
   };
+  // file inputs are usually hidden behind a styled button, so accept the button/label/dropzone ref too
+  W.fileInput = (r) => {
+    const isFile = (e) => e && e.tagName === 'INPUT' && e.type === 'file';
+    if (!r) {
+      const all = document.querySelectorAll('input[type=file]');
+      if (all.length === 1) return all[0];
+      throw new Error(all.length ? `${all.length} file inputs on page, pass the ref of the upload button` : 'no file input on page');
+    }
+    const el = resolve(r);
+    const hit = [el, el.control, el.querySelector('input[type=file]'), el.closest('label')?.control,
+      el.closest('form,[role=dialog]')?.querySelector('input[type=file]')].find(isFile);
+    if (!hit) throw new Error(`no file input at or near ${r}, try web upload <file> without a ref`);
+    return hit;
+  };
   W.rect = (r) => {
     const el = resolve(r);
     el.scrollIntoView({ block: 'center' });
