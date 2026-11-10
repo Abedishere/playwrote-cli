@@ -152,6 +152,8 @@ flowchart LR
 
 - Chromium browsers only. Firefox doesn't speak CDP.
 - No iframes or Shadow DOM traversal yet. Use `web eval` for those.
+- Page dialogs (alert/confirm/prompt) are answered while a `web` command runs (confirms dismissed unless `--accept`). One that opens between commands freezes the tab; `web close` and reopen.
+- Per-command limits and workarounds for agents are in [SKILL.md](SKILL.md#limits-per-command-work-around-them-do-not-retry-blindly).
 - Tested on Windows. macOS and Linux need browser paths added in `web.js` (PRs welcome).
 
 ## 📄 License

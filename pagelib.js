@@ -31,9 +31,14 @@ module.exports = function install() {
   }
 
   function strong(el) { return el.matches(STRONG); }
+  // ponytail: name/attr heuristic, script-added drop listeners on plain divs stay invisible (CDP getEventListeners if that bites)
+  const dropish = (el) => el.hasAttribute('ondrop') || el.hasAttribute('ondragover') ||
+    /drop[-_]?(zone|area|target)|(file|drag)[-_]?(and[-_]?|n[-_]?)?drop|droppable|\bdz-/i.test(el.id + ' ' + (typeof el.className === 'string' ? el.className : ''));
 
   function interactive(el) {
     if (strong(el)) return true;
+    // drop zones often have no text, cursor or role; their inner file input is hidden, so ignore invisible controls
+    if (dropish(el)) return ![...el.querySelectorAll(STRONG)].some(visible);
     const weak = el.hasAttribute('onclick') || (el.tabIndex >= 0 && el.hasAttribute('tabindex')) ||
       (getComputedStyle(el).cursor === 'pointer' && (!el.parentElement || getComputedStyle(el.parentElement).cursor !== 'pointer'));
     if (!weak) return false;
@@ -57,7 +62,7 @@ module.exports = function install() {
       return ty === 'text' ? 'textbox' : 'textbox:' + ty;
     }
     if (el.isContentEditable) return 'textbox';
-    return 'clickable';
+    return dropish(el) ? 'dropzone' : 'clickable';
   }
 
   function name(el) {

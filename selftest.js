@@ -15,6 +15,7 @@ const HTML = `<!doctype html><title>web selftest</title>
 <button type="button" onclick="document.getElementById('out').textContent='clicked:'+document.getElementById('q').value+'-'+document.getElementById('s').value+'-'+document.getElementById('c').checked">Go</button>
 </form>
 <p id="out">waiting</p>
+<button type="button" onclick="document.getElementById('dl').textContent='confirm:'+confirm('Sure?')">Ask</button><span id="dl"></span>
 <div style="display:none">SECRETHIDDEN</div>
 <ul id="list">${Array.from({ length: 250 }, (_, i) => `<li class="row">Item ${i + 1} <a href="#i${i + 1}">open</a></li>`).join('')}</ul>
 <table><tr><th>Name</th><th>Qty</th></tr><tr><td>Apple</td><td>3</td></tr><tr><td>Pear</td><td>5</td></tr></table>
@@ -27,7 +28,7 @@ module.exports = async ({ st, b, Ctx, CMDS, newTab, http, BROWSERS, fl }) => {
   const results = [];
   let tab;
   const check = (name, cond, got) => results.push((cond ? 'pass ' : 'FAIL ') + name + (cond ? '' : `\n     got: ${String(got).slice(0, 300).replace(/\n/g, '\n     ')}`));
-  const run = (cmd, ...a) => { const fl2 = {}; const pos = a.filter((x) => (typeof x === 'object' ? (Object.assign(fl2, x), false) : true)); return CMDS[cmd](ctx, pos, fl2); };
+  const run = (cmd, ...a) => { const fl2 = {}; const pos = a.filter((x) => (typeof x === 'object' ? (Object.assign(fl2, x), false) : true)); ctx.fl = fl2; return CMDS[cmd](ctx, pos, fl2); };
   try {
     await ctx.attach(); ctx.close(); // ensures browser is up
     tab = await newTab(port);
@@ -70,6 +71,11 @@ module.exports = async ({ st, b, Ctx, CMDS, newTab, http, BROWSERS, fl }) => {
     check('type --clear --enter submits form', (await run('text')).includes('submitted:bye'), await run('text'));
     const up = await run('upload', __filename);
     check('upload to hidden file input', up === 'ok 1 file: selftest.js' && (await run('text')).includes('file:selftest.js'), up);
+    const ask = ref(await run('find', 'Ask'), /\[(e\d+)/);
+    await run('click', ask);
+    check('confirm dismissed by default', (await run('text')).includes('confirm:false') && /confirm "Sure\?" -> dismissed/.test(ctx.dialogs.join()), ctx.dialogs);
+    await run('click', ask, { accept: true });
+    check('confirm accepted with --accept', (await run('text')).includes('confirm:true'), await run('text'));
     const dz = ref(await run('find', 'Drop here'), /\[(e\d+)/);
     const dr = await run('upload', dz, __filename);
     check('upload drops onto dropzone', dr.startsWith('ok dropped') && (await run('text')).includes('drop:selftest.js'), dr);

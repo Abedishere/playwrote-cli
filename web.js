@@ -14,7 +14,7 @@ const BROWSERS = {
   chrome: { port: 9223, exe: ['C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe', path.join(L, 'Google', 'Chrome', 'Application', 'chrome.exe')] },
   edge: { port: 9224, exe: ['C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe', 'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe'] },
 };
-const BOOL = new Set(['enter', 'clear', 'raw', 'quiet', 'interactive', 'i', 'all', 'minimized']);
+const BOOL = new Set(['enter', 'clear', 'raw', 'quiet', 'interactive', 'i', 'all', 'minimized', 'accept']);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const clip = (s, n) => (s.length > n ? s.slice(0, n - 1) + '…' : s);
 
@@ -157,7 +157,18 @@ class Ctx {
     this.close();
     this.tab = t;
     this.c = await CDP.connect(t.webSocketDebuggerUrl);
-    await this.c.send('Emulation.setFocusEmulationEnabled', { enabled: true }).catch(() => {});
+    // answer alert/confirm/prompt as they open, or the tab freezes and every later call times out
+    this.dialogs = [];
+    this.c.subs.push((m) => {
+      if (m.method !== 'Page.javascriptDialogOpening') return;
+      const { type, message } = m.params, fl = this.fl || {};
+      const accept = type === 'alert' || type === 'beforeunload' || !!fl.accept || fl.prompt != null;
+      this.c.send('Page.handleJavaScriptDialog', { accept, ...(type === 'prompt' && fl.prompt != null ? { promptText: fl.prompt } : {}) }).catch(() => {});
+      this.dialogs.push(`dialog ${type} "${clip(message, 200)}" -> ${accept ? 'accepted' : 'dismissed (rerun with --accept, or --prompt "text" for a prompt)'}`);
+    });
+    // Page.enable never answers while a dialog opened before we attached is still showing
+    this.frozen = await this.c.send('Page.enable', {}, 3000).then(() => false, () => true);
+    if (!this.frozen) await this.c.send('Emulation.setFocusEmulationEnabled', { enabled: true }).catch(() => {});
   }
   close() { if (this.c) this.c.close(); this.c = null; }
   async ev(expr, timeout) {
@@ -279,12 +290,29 @@ const CMDS = {
     const { objectId } = res.result;
     const n = `${files.length} file${files.length > 1 ? 's' : ''}: ${files.map((f) => path.basename(f)).join(', ')}`;
     if (!objectId) {
-      // no file input: drag the files onto the element like a user dropping them from Explorer
+      // 1. no input next to the ref: click it and catch whatever file chooser the page opens, wherever its input lives
+      const opened = new Promise((ok) => { const t = setTimeout(() => ok(null), 2000); ctx.c.subs.push((m) => { if (m.method === 'Page.fileChooserOpened') { clearTimeout(t); ok(m.params); } }); });
+      await ctx.c.send('Page.enable');
+      await ctx.c.send('Page.setInterceptFileChooserDialog', { enabled: true });
+      let fc;
+      try { await CMDS.click(ctx, [r]); fc = await opened; }
+      finally { await ctx.c.send('Page.setInterceptFileChooserDialog', { enabled: false }).catch(() => {}); }
+      if (fc) {
+        if (files.length > 1 && fc.mode === 'selectSingle') throw new Fail('this file input takes one file');
+        await ctx.c.send('DOM.setFileInputFiles', { backendNodeId: fc.backendNodeId, files });
+        return `ok ${n} (via the file picker ${r} opens)`;
+      }
+      // 2. no picker: drag the files onto it like a drop from Explorer, and check the page took them
       const p = await ctx.lib('point', r);
+      // capture listener sees the drop first; the bubble one runs last and, if nobody handled it, stops Chromium opening the file as a page
+      await ctx.ev(`window.__webDrop = null; addEventListener('drop', () => { window.__webDrop = 'seen' }, { capture: true, once: true });
+        addEventListener('drop', (e) => { if (!e.defaultPrevented) { e.preventDefault(); window.__webDrop = 'ignored' } }, { once: true }), 1`);
       const data = { items: [], files, dragOperationsMask: 1 }; // 1 = copy
       for (const type of ['dragEnter', 'dragOver', 'drop']) await ctx.c.send('Input.dispatchDragEvent', { type, x: p.x, y: p.y, data });
+      const d = await ctx.ev('window.__webDrop'), got = d === 'seen' ? true : d === 'ignored' ? false : null;
+      if (got !== true) throw new Fail(`${r} is not an upload target: clicking it opened no file picker and ${got === null ? 'it does not accept drops' : 'the page ignored the drop'}. Find the real upload button or drop zone (web find dropzone: / web find upload)`);
       await ctx.settle(2000);
-      return `ok dropped ${n} onto ${r}${p.covered ? ` (covered by ${p.covered})` : ''}`;
+      return `ok dropped ${n} onto ${r}`;
     }
     if (files.length > 1 && !(await ctx.c.send('Runtime.callFunctionOn', { objectId, functionDeclaration: 'function(){return this.multiple}', returnByValue: true })).result.value)
       throw new Fail('this file input takes one file');
@@ -361,7 +389,8 @@ const CMDS = {
       const toks = tokenize(lines[i]); if (toks[0] === 'web') toks.shift();
       const { pos, fl } = parse(toks); const cmd = pos.shift();
       if (!CMDS[cmd] || ['do', 'selftest'].includes(cmd)) { out.push(`error line ${i + 1}: unknown or unsupported in do: ${cmd}`); return finish(out, 1); }
-      try { out.push(`> ${lines[i]}\n` + (await CMDS[cmd](ctx, pos, fl))); }
+      ctx.fl = fl;
+      try { out.push(`> ${lines[i]}\n` + [await CMDS[cmd](ctx, pos, fl), ...ctx.dialogs.splice(0)].join('\n')); }
       catch (e) { out.push(`> ${lines[i]}\nerror line ${i + 1}: ${e.message}`); return finish(out, 1); }
     }
     return out.join('\n');
@@ -390,7 +419,8 @@ const HELP = `web <cmd> [args] [--b opera|chrome|edge] [--tab <id>]   (docs: ${p
   text [--sel css] [--max N]                                   click <ref>     hover <ref>
   type <ref> <text> [--clear] [--enter]                        select <ref> <option>
   upload [ref] <file...>  set files on a file input (ref may be its button/label; no ref = the page's only one;
-                        ref without a file input = drag-and-drop the files onto it)
+                        ref without a file input = click it to catch the picker, else drop the files onto it)
+  any action: --accept / --prompt "text" answers a confirm/prompt dialog (default: dismiss)
   key <Enter|Tab|Control+a|...>   scroll [down|up|<ref>]       wait <text|ref|url:x|gone:x> [--t s]
   eval <js>   shot [ref] [--o file]   net [--filter s]   console [--all]   back   reload
   use <tabid>  close   do (commands on stdin, one per line)   selftest [--minimized]
@@ -405,7 +435,13 @@ async function main() {
   if (GLOBAL[cmd]) return GLOBAL[cmd](st, b, pos, fl);
   if (!CMDS[cmd]) throw new Fail(`unknown command ${cmd}, run web help`);
   const ctx = new Ctx(st, b);
-  try { await ctx.attach(fl.tab); return await CMDS[cmd](ctx, pos, fl); }
+  ctx.fl = fl;
+  try {
+    await ctx.attach(fl.tab);
+    if (ctx.frozen && !['close', 'open', 'use'].includes(cmd)) throw new Fail('tab is frozen by a page dialog (alert/confirm) that opened while web was not attached. Run web close, then web open <url> again');
+    const out = await CMDS[cmd](ctx, pos, fl);
+    return [out, ...ctx.dialogs].join('\n');
+  } catch (e) { if (ctx.dialogs?.length) e.message += '\n' + ctx.dialogs.join('\n'); throw e; }
   finally { ctx.close(); }
 }
 
