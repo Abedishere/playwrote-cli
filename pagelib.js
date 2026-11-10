@@ -273,9 +273,8 @@ module.exports = function install() {
     }
     const el = resolve(r);
     const hit = [el, el.control, el.querySelector('input[type=file]'), el.closest('label')?.control,
-      el.closest('form,[role=dialog]')?.querySelector('input[type=file]')].find(isFile);
-    if (!hit) throw new Error(`no file input at or near ${r}, try web upload <file> without a ref`);
-    return hit;
+      ...(el.parentElement?.children || [])].find(isFile); // direct siblings only: a wider search grabs unrelated inputs
+    return hit || null; // null = caller drops the files onto the element instead
   };
   W.rect = (r) => {
     const el = resolve(r);

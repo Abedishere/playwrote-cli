@@ -90,7 +90,7 @@ EOF
 | `web click <ref>` | Clicks |
 | `web type <ref> <text> [--enter] [--clear]` | Types into a field |
 | `web select <ref> <option>` | Picks a dropdown option |
-| `web upload [ref] <file...>` | Attaches files to a file input. The ref can be the upload button or label; with no ref it uses the page's only file input |
+| `web upload [ref] <file...>` | Attaches files to a file input. The ref can be the upload button or label; with no ref it uses the page's only file input. A ref with no file input (a drag-and-drop zone) gets the files dropped onto it |
 | `web key Enter` | Presses a key (`Tab`, `Escape`, `Control+a`, ...) |
 | `web scroll [down\|up\|<ref>]` | Scrolls |
 | `web wait <text\|ref\|url:part>` | Waits until something appears |

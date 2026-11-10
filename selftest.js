@@ -11,6 +11,7 @@ const HTML = `<!doctype html><title>web selftest</title>
 <select id="s"><option value="a">Alpha</option><option value="b">Beta</option></select>
 <label><input type="checkbox" id="c"> Agree</label>
 <label>Attach <input type="file" id="f" style="display:none" onchange="document.getElementById('fout').textContent='file:'+this.files[0].name"></label><span id="fout"></span>
+<div role="button" ondragover="event.preventDefault()" ondrop="event.preventDefault();this.textContent='drop:'+event.dataTransfer.files[0].name">Drop here</div>
 <button type="button" onclick="document.getElementById('out').textContent='clicked:'+document.getElementById('q').value+'-'+document.getElementById('s').value+'-'+document.getElementById('c').checked">Go</button>
 </form>
 <p id="out">waiting</p>
@@ -69,6 +70,9 @@ module.exports = async ({ st, b, Ctx, CMDS, newTab, http, BROWSERS, fl }) => {
     check('type --clear --enter submits form', (await run('text')).includes('submitted:bye'), await run('text'));
     const up = await run('upload', __filename);
     check('upload to hidden file input', up === 'ok 1 file: selftest.js' && (await run('text')).includes('file:selftest.js'), up);
+    const dz = ref(await run('find', 'Drop here'), /\[(e\d+)/);
+    const dr = await run('upload', dz, __filename);
+    check('upload drops onto dropzone', dr.startsWith('ok dropped') && (await run('text')).includes('drop:selftest.js'), dr);
     const fake = ref(await run('find', 'Fake'), /\[(e\d+)/);
     await run('click', fake);
     check('click weak clickable', (await run('text')).includes('div clicked'), await run('text'));

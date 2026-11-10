@@ -273,14 +273,23 @@ const CMDS = {
     if (!args.length) throw new Fail('upload needs file paths: web upload [ref] <file> [file...]');
     const files = args.map((f) => path.resolve(f));
     const missing = files.find((f) => !fs.statSync(f, { throwIfNoEntry: false })?.isFile());
-    if (missing) throw new Fail('no such file ' + missing);
+    if (missing) throw new Fail('not a file: ' + missing);
     const res = await ctx.c.send('Runtime.evaluate', { expression: `(${LIB})(), window.__web.fileInput(${JSON.stringify(r)})` });
     if (res.exceptionDetails) throw new Fail((res.exceptionDetails.exception?.description || 'error').split('\n')[0].replace(/^Error: /, ''));
     const { objectId } = res.result;
+    const n = `${files.length} file${files.length > 1 ? 's' : ''}: ${files.map((f) => path.basename(f)).join(', ')}`;
+    if (!objectId) {
+      // no file input: drag the files onto the element like a user dropping them from Explorer
+      const p = await ctx.lib('point', r);
+      const data = { items: [], files, dragOperationsMask: 1 }; // 1 = copy
+      for (const type of ['dragEnter', 'dragOver', 'drop']) await ctx.c.send('Input.dispatchDragEvent', { type, x: p.x, y: p.y, data });
+      await ctx.settle(2000);
+      return `ok dropped ${n} onto ${r}${p.covered ? ` (covered by ${p.covered})` : ''}`;
+    }
     if (files.length > 1 && !(await ctx.c.send('Runtime.callFunctionOn', { objectId, functionDeclaration: 'function(){return this.multiple}', returnByValue: true })).result.value)
       throw new Fail('this file input takes one file');
     await ctx.c.send('DOM.setFileInputFiles', { objectId, files }); // fires input + change like a real pick
-    return `ok ${files.length} file${files.length > 1 ? 's' : ''}: ${files.map((f) => path.basename(f)).join(', ')}`;
+    return `ok ${n}`;
   },
   async key(ctx, [k]) { if (!k) throw new Fail('key needs a key, e.g. Enter or Control+a'); const b = await ctx.url(); await press(ctx, k); return afterAction(ctx, b); },
   async hover(ctx, [r]) { const p = await ctx.lib('point', needRef(r, 'hover')); await ctx.c.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: p.x, y: p.y }); return 'ok'; },
@@ -380,7 +389,8 @@ const HELP = `web <cmd> [args] [--b opera|chrome|edge] [--tab <id>]   (docs: ${p
   snap                  = page --interactive                   find <text|role:text>
   text [--sel css] [--max N]                                   click <ref>     hover <ref>
   type <ref> <text> [--clear] [--enter]                        select <ref> <option>
-  upload [ref] <file...>  set files on a file input (ref may be its button/label; no ref = the page's only one)
+  upload [ref] <file...>  set files on a file input (ref may be its button/label; no ref = the page's only one;
+                        ref without a file input = drag-and-drop the files onto it)
   key <Enter|Tab|Control+a|...>   scroll [down|up|<ref>]       wait <text|ref|url:x|gone:x> [--t s]
   eval <js>   shot [ref] [--o file]   net [--filter s]   console [--all]   back   reload
   use <tabid>  close   do (commands on stdin, one per line)   selftest [--minimized]
